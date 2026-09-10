@@ -1,0 +1,39 @@
+{
+  "tasks": [
+    {
+      "id": 2,
+      "text": "Test task 2",
+      "done": true,
+      "createdAt": "2026-09-10T08:09:16.558Z",
+      "doneAt": "2026-09-10T08:09:35.765Z"
+    },
+    {
+      "id": 3,
+      "text": "Whitespace test",
+      "done": false,
+      "createdAt": "2026-09-10T08:09:16.571Z",
+      "doneAt": null
+    },
+    {
+      "id": 4,
+      "text": "To be done",
+      "done": true,
+      "createdAt": "2026-09-10T08:09:16.603Z",
+      "doneAt": "2026-09-10T08:09:16.610Z"
+    },
+    {
+      "id": 5,
+      "text": "how much RAM?",
+      "done": false,
+      "createdAt": "2026-09-10T08:09:43.051Z",
+      "doneAt": null
+    },
+    {
+      "id": 6,
+      "text": "ALL OF IT!!!",
+      "done": false,
+      "createdAt": "2026-09-10T08:09:46.914Z"
+    }
+  ],
+  "nextId": 7
+}

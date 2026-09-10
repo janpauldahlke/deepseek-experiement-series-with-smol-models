@@ -1,0 +1,17 @@
+{
+  "name": "taskbox",
+  "version": "2.0.0",
+  "description": "A tiny full-stack task manager with REST API and web UI",
+  "scripts": {
+    "start": "node server.js",
+    "test": "npx jest tests/api.test.js --testTimeout=10000",
+    "test:cli": "node tests/run.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
