@@ -7,12 +7,10 @@
 **Harness clone (reference + limited edits OK):** `/Users/jandahlke/dev/hagbards_stuff/deepseek-harness` (`master`, `pnpm run build` / `pnpm dsh web`)  
 **Cordis + howto map:** [`BLUEPRINTS.md`](./BLUEPRINTS.md) — read Tier A/B before coding  
 **Human role:** architecture / spec; morning review of what the overnight agent produced  
-**Implementer:** Qwen3.8 ~27B Q8 (or similar) running **agentic coding** via DeepSeek Harness against a **company server-cluster local model** — long-running, minimally supervised  
+**Implementer:** Qwen3.8 ~27B Q8 (or similar) running **agentic coding** via DeepSeek Harness, long-running, minimally supervised  
 **Human does NOT write production code in this run**
 
-**Related (parked):** vault-memory lives at `../dsh-vault-memory/` — do **not** implement it in this run.
-
-**Meta:** This is a **long-running agentic coding behavior experiment**. A colleague hosts the weights on a cluster; the harness drives multi-hour tool use with near-zero human-in-the-loop. The pet plugin is a **concrete deliverable** that also forces real DSH client packaging (`--patch` → `dsh.client` → visible UI). Dual outcome: (1) observe how a ~27B local coder behaves overnight; (2) leave a working cute artifact + learned plugin path. L0/L1/L2 spine stays frozen.
+**Meta:** This is a **long-running agentic coding behavior experiment**. A colleague hosts the weights on a cluster; the harness drives multi-hour tool use with near-zero human-in-the-loop. The pet plugin is a **concrete deliverable** that also forces real DSH client packaging (`--patch` → `dsh.client` → visible UI). Dual outcome: (1) observe how a ~27B local coder behaves overnight; (2) leave a working artifact + learned plugin path. L0/L1/L2 spine stays frozen.
 
 ---
 
@@ -43,15 +41,15 @@ You are implementing an **out-of-tree DeepSeek Harness Web Client plugin**: a VS
 
 ### Success definition (must all pass by morning)
 
-| # | Acceptance |
-|---|------------|
-| A1 | After `pnpm install && pnpm build` in `dsh-agent-pet`, Host-only `--patch` insert loads without crashing Web UI; client half appears in boot graph (overlay can mount) |
-| A2 | Pet canvas visible in a screen corner (default bottom-right), ~140–180px |
-| A3 | Idle animation loops (bob / breathe) without user input |
-| A4 | At least **4** distinct moods visibly change during a real chat turn (e.g. idle → think → talk → happy) |
-| A5 | Settings (or Cordis config) can toggle **enabled**, pick **corner**, and select **species id** (even if only one species exists) |
-| A6 | Registry pattern: adding a fake second species stub compiles / is documented in README as “drop file here” |
-| A7 | README with run steps + emotion mapping table; `pnpm test` (or `node --test`) covers pure mood reducer |
+| #   | Acceptance                                                                                                                                                             |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | After `pnpm install && pnpm build` in `dsh-agent-pet`, Host-only `--patch` insert loads without crashing Web UI; client half appears in boot graph (overlay can mount) |
+| A2  | Pet canvas visible in a screen corner (default bottom-right), ~140–180px                                                                                               |
+| A3  | Idle animation loops (bob / breathe) without user input                                                                                                                |
+| A4  | At least **4** distinct moods visibly change during a real chat turn (e.g. idle → think → talk → happy)                                                                |
+| A5  | Settings (or Cordis config) can toggle **enabled**, pick **corner**, and select **species id** (even if only one species exists)                                       |
+| A6  | Registry pattern: adding a fake second species stub compiles / is documented in README as “drop file here”                                                             |
+| A7  | README with run steps + emotion mapping table; `pnpm test` (or `node --test`) covers pure mood reducer                                                                 |
 
 ### Stop conditions
 
@@ -90,19 +88,19 @@ On `turn/start` → enter `listen` for **~400ms**, then transition to `think` un
 
 ### G3 — Hold vs priority (frozen)
 
-| Rule | Behavior |
-|------|----------|
-| Higher-priority signal arrives during a hold | **Breaks the hold immediately**; apply new mood |
-| Lower-or-equal priority during a hold | **Swallowed**; hold continues until expiry or a higher signal |
+| Rule                                         | Behavior                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| Higher-priority signal arrives during a hold | **Breaks the hold immediately**; apply new mood               |
+| Lower-or-equal priority during a hold        | **Swallowed**; hold continues until expiry or a higher signal |
 
 Priority (high → low): `shock` > `sad` > `work` > `talk` > `think` > `listen` > `idle`  
 (`happy` is a success hold after turn end; treat as mid-high: breaks `listen/think/talk/work` idle falls, but is broken by `shock/sad/work` if a new turn starts oddly — practical rule: `happy` hold breaks on any new `turn/start`.)
 
 ### G4 — `sad` vs `shock` (frozen)
 
-| Failure class | Mood |
-|---------------|------|
-| Tool-level failure (`tool/result` error / isError) | `sad` |
+| Failure class                                                                                    | Mood    |
+| ------------------------------------------------------------------------------------------------ | ------- |
+| Tool-level failure (`tool/result` error / isError)                                               | `sad`   |
 | Turn-level failure (`turn/end` with `reason.kind === 'error'`, or equivalent turn error surface) | `shock` |
 
 If ambiguous, prefer `shock` only when the whole turn is marked failed; otherwise `sad`.
@@ -121,7 +119,8 @@ If ambiguous, prefer `shock` only when the whole turn is marked failed; otherwis
 
 - Default product UI may already be on `3080`.
 - Acceptance: from harness root, e.g.  
-  `pnpm dsh web --port 3090 --no-open --patch <absolute-path-to>/dsh-agent-pet/cordis.yml`
+  `pnpm dsh web --patch <absolute-path-to>/dsh-agent-pet/cordis.yml --port 3090 --no-open`  
+  (`--patch` is a **launcher** flag — it must appear **before** `--port` / other web-app flags, or the web Command rejects it as unknown.)
 - Self-verify A4 by sending a test prompt on **3090** without killing the operator’s primary conversation.
 - Do **not** choose restart-and-resume of the planning session for acceptance.
 
@@ -135,16 +134,16 @@ Grounded on `packages/experimental/inspector` patch YAMLs + `package.json` `dsh.
 
 `dsh-agent-pet` sits **outside** the harness pnpm workspace, but must still be a **real package** with that same shape.
 
-| Concern | Frozen rule |
-|---------|-------------|
-| Own build | **Required.** `pnpm install && pnpm build` inside `dsh-agent-pet` before any A1 launch. Emit `lib/index.js` (host) + `lib/client.js` (browser). Mirror inspector: `tsdown.config.ts`, host/client tsconfigs, `lib/` output. |
-| Patch insert | Host face only, e.g. `name: './src/index.ts'` (yml-anchored) or absolute path to host entry. **Do not** list the client in `cordis.yml`. |
-| `dsh.client` | Mirror inspector **verbatim**: `{ "platform": "web", "immediately": true, "inject": [] }` so the overlay mounts at shell boot, not lazily. |
-| `exports["./client"]` | Points at **built** `lib/client.js` (one browser-consumed file). |
-| `three` as dependency | **Yes** — declare in **this** `package.json`, install under `dsh-agent-pet/node_modules`. Never add `three` to harness root. |
-| `three` at runtime | Browser cannot resolve bare `import 'three'` from `/plugins` combo. tsdown **must bundle (inline) `three` into `lib/client.js`**. Do **not** externalize `three`. Contrast: `@deepseek-ai/*` stay external (harness module graph provides them). This is a **Phase-0/1 build setting**, not a discovery. |
-| Out-of-tree unknown | Whether Loader “owning-tree baseUrl” resolves a package in a **different repo**. Prove in Phase 0; if balks within **30 min**, relocate to `deepseek-harness/packages/experimental/agent-pet`. |
-| Escape hatches (ordered) | (1) canvas2d still on `shell.overlay` but keep build/`dsh.client` shape; (2) experimental in-tree package; (3) `file:` profile install — last resort. |
+| Concern                  | Frozen rule                                                                                                                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Own build                | **Required.** `pnpm install && pnpm build` inside `dsh-agent-pet` before any A1 launch. Emit `lib/index.js` (host) + `lib/client.js` (browser). Mirror inspector: `tsdown.config.ts`, host/client tsconfigs, `lib/` output.                                                                              |
+| Patch insert             | Host face only, e.g. `name: './src/index.ts'` (yml-anchored) or absolute path to host entry. **Do not** list the client in `cordis.yml`.                                                                                                                                                                 |
+| `dsh.client`             | Mirror inspector **verbatim**: `{ "platform": "web", "immediately": true, "inject": [] }` so the overlay mounts at shell boot, not lazily.                                                                                                                                                               |
+| `exports["./client"]`    | Points at **built** `lib/client.js` (one browser-consumed file).                                                                                                                                                                                                                                         |
+| `three` as dependency    | **Yes** — declare in **this** `package.json`, install under `dsh-agent-pet/node_modules`. Never add `three` to harness root.                                                                                                                                                                             |
+| `three` at runtime       | Browser cannot resolve bare `import 'three'` from `/plugins` combo. tsdown **must bundle (inline) `three` into `lib/client.js`**. Do **not** externalize `three`. Contrast: `@deepseek-ai/*` stay external (harness module graph provides them). This is a **Phase-0/1 build setting**, not a discovery. |
+| Out-of-tree unknown      | Whether Loader “owning-tree baseUrl” resolves a package in a **different repo**. Prove in Phase 0; if balks within **30 min**, relocate to `deepseek-harness/packages/experimental/agent-pet`.                                                                                                           |
+| Escape hatches (ordered) | (1) canvas2d still on `shell.overlay` but keep build/`dsh.client` shape; (2) experimental in-tree package; (3) `file:` profile install — last resort.                                                                                                                                                    |
 
 Treat slots as **solved in docs**. Budget time for **build + client graph**, not inventing a second load path.
 
@@ -158,7 +157,7 @@ Mood state lives in a tiny **module-singleton** store (`getState` / `subscribe` 
 
 ## 1. Why this experiment exists
 
-We are testing **long-running agentic coding** with a **locally hosted** mid-size model (Qwen3.8-class ~27B Q8) on a **company server cluster**, driven by DeepSeek Harness. A human colleague keeps the inference box alive; the **coding agent** should run overnight with **near-zero HITL** — no step-by-step babysitting, no “please click approve,” no waiting on the architect for choices already frozen in this plan.
+We are testing **long-running agentic coding** with a **locally hosted** mid-size model (Qwen3.8-class ~27B Q8) driven by DeepSeek Harness. A human colleague keeps the inference box alive; the **coding agent** should run overnight with **near-zero HITL** — no step-by-step babysitting, no “please click approve,” no waiting on the architect for choices already frozen in this plan.
 
 Vault-memory is a later product idea; it needs more human judgment (embeddings, remember UX, retrieval quality). The pet is a **better first overnight probe**: real harness client packaging + visible output + bounded scope, so we can watch how the agent handles Phase 0 walls, rebuild loops, and honest stop conditions.
 
@@ -189,13 +188,13 @@ The companion is the agent’s mascot. Watching a long local-model run should fe
 
 Expose at least:
 
-| Setting | Type | Default |
-|---------|------|---------|
-| `enabled` | boolean | `true` |
-| `speciesId` | string | `"kirby-blob"` |
-| `corner` | enum: `bottom-right` \| `bottom-left` \| `top-right` \| `top-left` | `bottom-right` |
-| `sizePx` | number 96–240 | `160` |
-| `reducedMotion` | boolean | `false` (when true: crossfade colors, no bob) |
+| Setting         | Type                                                               | Default                                       |
+| --------------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| `enabled`       | boolean                                                            | `true`                                        |
+| `speciesId`     | string                                                             | `"kirby-blob"`                                |
+| `corner`        | enum: `bottom-right` \| `bottom-left` \| `top-right` \| `top-left` | `bottom-right`                                |
+| `sizePx`        | number 96–240                                                      | `160`                                         |
+| `reducedMotion` | boolean                                                            | `false` (when true: crossfade colors, no bob) |
 
 Prefer Host settings namespace + Plugins settings card if feasible in overnight time (§7). Minimum bar: Cordis `Config` schema read at load; settings card is Phase 1b if time allows.
 
@@ -268,24 +267,24 @@ Frozen: **observe-only L0** for v0. Leave a comment hook `ingestManualEmote(mood
 
 ```ts
 interface PetSpecies {
-  id: string
-  displayName: string
+  id: string;
+  displayName: string;
   /** Build / update the Three.js object graph for this species */
-  createView(ctx: PetViewContext): PetView
+  createView(ctx: PetViewContext): PetView;
 }
 
 interface PetView {
-  root: THREE.Object3D
-  setMood(mood: Mood, opts: { reducedMotion: boolean }): void
-  dispose(): void
+  root: THREE.Object3D;
+  setMood(mood: Mood, opts: { reducedMotion: boolean }): void;
+  dispose(): void;
 }
 ```
 
 Registry:
 
 ```ts
-const speciesRegistry = new Map<string, PetSpecies>()
-registerSpecies(kirbyBlob)
+const speciesRegistry = new Map<string, PetSpecies>();
+registerSpecies(kirbyBlob);
 // later: registerSpecies(catBlob)
 ```
 
@@ -295,10 +294,10 @@ Settings `speciesId` selects from registry; unknown id → fallback `kirby-blob`
 
 ### 3.4 Package split (Host vs Client) — inspector shape
 
-| Half | Path | Role |
-|------|------|------|
-| Host | `src/index.ts` → `lib/index.js` | Cordis `apply`, Config; **only** face named in `--patch` |
-| Client | `src/client/index.ts` → `lib/client.js` | `shell.overlay` registration, React+Three, signals |
+| Half   | Path                                    | Role                                                     |
+| ------ | --------------------------------------- | -------------------------------------------------------- |
+| Host   | `src/index.ts` → `lib/index.js`         | Cordis `apply`, Config; **only** face named in `--patch` |
+| Client | `src/client/index.ts` → `lib/client.js` | `shell.overlay` registration, React+Three, signals       |
 
 **`package.json` must include** (mirror inspector):
 
@@ -331,16 +330,16 @@ If Host+Client packaging blocks overnight after the experimental relocate: canva
 
 ## 4. L0 signal → L1 mood mapping (implement this table)
 
-| Signal (approx) | Mood | Hold |
-|-----------------|------|------|
-| Agent idle / no open turn | `idle` | — |
-| `turn/start` | `listen` → then `think` | listen **400ms** (G2), then think |
-| Waiting for first assistant token | `think` | until stream / higher signal |
-| `assistant/live-chunk` text | `talk` | while streaming |
-| `tool/call` active | `work` | while tools active |
-| `turn/end` success | `happy` | 1500ms → idle (broken by new `turn/start`) |
-| Tool-level failure | `sad` | 2000ms → idle (G4) |
-| Turn-level failure | `shock` | 2000ms → idle (G4) |
+| Signal (approx)                   | Mood                    | Hold                                       |
+| --------------------------------- | ----------------------- | ------------------------------------------ |
+| Agent idle / no open turn         | `idle`                  | —                                          |
+| `turn/start`                      | `listen` → then `think` | listen **400ms** (G2), then think          |
+| Waiting for first assistant token | `think`                 | until stream / higher signal               |
+| `assistant/live-chunk` text       | `talk`                  | while streaming                            |
+| `tool/call` active                | `work`                  | while tools active                         |
+| `turn/end` success                | `happy`                 | 1500ms → idle (broken by new `turn/start`) |
+| Tool-level failure                | `sad`                   | 2000ms → idle (G4)                         |
+| Turn-level failure                | `shock`                 | 2000ms → idle (G4)                         |
 
 **Hold vs priority:** G3 (higher breaks immediately; lower swallowed).
 
@@ -360,13 +359,16 @@ Exact binding/subscribe wiring: **G1**. Phase-0 may refine event field names; do
 Register something like:
 
 ```ts
-ctx.slots.inject('shell.overlay', () =>
-  ctx.slots.register({
-    name: 'shell.overlay',
-    key: 'agent-pet',
-    // order: pick a high number so it sits above toasts if needed
-  }, AgentPetOverlay),
-)
+ctx.slots.inject("shell.overlay", () =>
+  ctx.slots.register(
+    {
+      name: "shell.overlay",
+      key: "agent-pet",
+      // order: pick a high number so it sits above toasts if needed
+    },
+    AgentPetOverlay,
+  ),
+);
 ```
 
 CSS: position fixed to configured corner; z-index appropriate; **`pointer-events: none`**.
@@ -431,7 +433,7 @@ Settings card per `docs/cookbook/adding-a-settings-card.md` (namespace `agent-pe
 # cordis.yml — HOST face only; client comes from package.json dsh.client + lib/client.js
 - insert:
     - id: agent-pet
-      name: './src/index.ts'
+      name: "./src/index.ts"
 ```
 
 Acceptance launch:
@@ -441,7 +443,7 @@ cd /Users/jandahlke/dev/hagbards_stuff/FlexLLM_DeepSeek_Experiments/dsh-agent-pe
 pnpm install && pnpm build
 
 cd /Users/jandahlke/dev/hagbards_stuff/deepseek-harness
-pnpm dsh web --port 3090 --no-open --patch /Users/jandahlke/dev/hagbards_stuff/FlexLLM_DeepSeek_Experiments/dsh-agent-pet/cordis.yml
+pnpm dsh web --patch /Users/jandahlke/dev/hagbards_stuff/FlexLLM_DeepSeek_Experiments/dsh-agent-pet/cordis.yml --port 3090 --no-open
 ```
 
 Rebuild `dsh-agent-pet` after every client source change before expecting UI updates (unless you later wire HMR the inspector way).
@@ -505,7 +507,7 @@ dsh-agent-pet/
 ### Phase 1 — Scaffold polish (30–60 min)
 
 - Solidify build scripts, Config schema, overlay colored box (proves A1/A2 without WebGL).
-- Document run-steps in README (`install` → `build` → `dsh web --port 3090 --patch …`).
+- Document run-steps in README (`install` → `build` → `dsh web --patch …/cordis.yml --port 3090`).
 
 ### Phase 2 — Overlay shell (30–60 min)
 
@@ -536,18 +538,18 @@ dsh-agent-pet/
 
 ## 10. Must-read harness docs / files
 
-| Path | Why |
-|------|-----|
-| `docs/subsystems/slots.md` | Slot model; `shell.overlay` |
-| `docs/subsystems/web-client.md` | Client composition |
-| `docs/cookbook/extension-cookbook.md` | UI plugin row |
-| `docs/cookbook/adding-a-settings-card.md` | Options UI |
-| `docs/user/develop/basic/index.md` + `tool.md` | `--patch` workflow (adapt for client) |
-| `packages/client/ui-layout/src/client/index.ts` | Declares `shell.overlay` |
-| `packages/experimental/inspector/` | **Canonical** host-only patch + `dsh.client` + built `./client` |
-| `packages/client/ui-theme/` | SettingsScope / Host+client packaging alternate |
-| `packages/client/ui-chat/` | Where live turn/stream UI interprets events |
-| `docs/subsystems/client-modules.md` | Why client is scanned from manifest, not cordis.yml |
+| Path                                            | Why                                                             |
+| ----------------------------------------------- | --------------------------------------------------------------- |
+| `docs/subsystems/slots.md`                      | Slot model; `shell.overlay`                                     |
+| `docs/subsystems/web-client.md`                 | Client composition                                              |
+| `docs/cookbook/extension-cookbook.md`           | UI plugin row                                                   |
+| `docs/cookbook/adding-a-settings-card.md`       | Options UI                                                      |
+| `docs/user/develop/basic/index.md` + `tool.md`  | `--patch` workflow (adapt for client)                           |
+| `packages/client/ui-layout/src/client/index.ts` | Declares `shell.overlay`                                        |
+| `packages/experimental/inspector/`              | **Canonical** host-only patch + `dsh.client` + built `./client` |
+| `packages/client/ui-theme/`                     | SettingsScope / Host+client packaging alternate                 |
+| `packages/client/ui-chat/`                      | Where live turn/stream UI interprets events                     |
+| `docs/subsystems/client-modules.md`             | Why client is scanned from manifest, not cordis.yml             |
 
 Harness root: `/Users/jandahlke/dev/hagbards_stuff/deepseek-harness`
 
@@ -572,7 +574,7 @@ Harness root: `/Users/jandahlke/dev/hagbards_stuff/deepseek-harness`
 
 1. Prerequisites (`dsh web`, Node, Ollama-not-needed)
 2. **Build:** `pnpm install && pnpm build` inside `dsh-agent-pet` (client is always prebuilt)
-3. Exact acceptance launch: `pnpm dsh web --port 3090 --no-open --patch <path-to>/cordis.yml` from harness root
+3. Exact acceptance launch: `pnpm dsh web --patch <path-to>/cordis.yml --port 3090 --no-open` from harness root (`--patch` before `--port`)
 4. Note: patch inserts **host only**; `three` is a dep and is **inlined** into `lib/client.js`
 5. Emotion mapping table (copy §4 / G2–G4)
 6. Config knobs
@@ -584,42 +586,42 @@ Harness root: `/Users/jandahlke/dev/hagbards_stuff/deepseek-harness`
 
 ## 14. Morning review rubric (human)
 
-| Grade | Meaning |
-|-------|---------|
-| A | A1–A7; Kirby cute; settings or solid Config; clean registry |
-| B | Visible pet + ≥4 moods on real turns; tests for reducer; packaging rough |
-| C | Overlay + color moods only (no Three) but wired to signals |
-| F | Modified harness core / click required / nothing visible |
+| Grade | Meaning                                                                  |
+| ----- | ------------------------------------------------------------------------ |
+| A     | A1–A7; Kirby cute; settings or solid Config; clean registry              |
+| B     | Visible pet + ≥4 moods on real turns; tests for reducer; packaging rough |
+| C     | Overlay + color moods only (no Three) but wired to signals               |
+| F     | Modified harness core / click required / nothing visible                 |
 
 ---
 
 ## 15. Decision log (frozen 2026-09-10; gaps closed same day)
 
-| Topic | Decision |
-|-------|----------|
-| Work root | `FlexLLM_DeepSeek_Experiments/dsh-agent-pet` (+ experimental harness fallback) |
-| Mount | `shell.overlay`, corner configurable |
-| Species | One real (`kirby-blob`) + registry for easy add |
-| Interaction | **No click** / no pointer handlers |
-| Emotion contract | L0 → L1 reducer; L2 needs **stub only** |
-| Signals | `SessionBinding.eventSource` (G1); Phase-0 for inject details |
-| listen | 400ms turn-start blip (G2) |
-| Hold/priority | Higher breaks; lower swallowed (G3) |
-| sad/shock | tool fail → sad; turn fail → shock (G4) |
-| Config→client | settingsScope preferred; cordis.yml+defaults fallback (G5) |
-| Acceptance | **Second** `dsh web --port 3090` (G6) |
-| Packaging risk | #1 = out-of-tree manifest resolve; **mechanism** = host-only patch + `dsh.client` + built client (G7) |
-| Own build | **Required** (`tsdown` → `lib/`); README: install+build before A1 |
-| `three` | Dep in `dsh-agent-pet` package.json; **inlined** into `lib/client.js` (not harness-provided) |
-| `dsh.client` | `{ platform: 'web', immediately: true, inject: [] }` (inspector verbatim) |
-| Patch YAML | Host face only; client never listed |
-| Mood store | Module singleton; RAF reads without React/frame (G-minor) |
-| Model tool emote | Deferred (hook only) |
-| Target app | `dsh web` only |
-| Blueprints | `BLUEPRINTS.md` + harness clone |
-| Vault memory | **Parked** |
-| Overnight model | Qwen3.8 ~27B Q8 (cluster-hosted) writes this plugin via harness |
-| HITL≈0 meaning | Long-running agentic coding with minimal human babysitting — **not** “pet has no clicks” (that is only a UI constraint) |
+| Topic            | Decision                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Work root        | `FlexLLM_DeepSeek_Experiments/dsh-agent-pet` (+ experimental harness fallback)                                          |
+| Mount            | `shell.overlay`, corner configurable                                                                                    |
+| Species          | One real (`kirby-blob`) + registry for easy add                                                                         |
+| Interaction      | **No click** / no pointer handlers                                                                                      |
+| Emotion contract | L0 → L1 reducer; L2 needs **stub only**                                                                                 |
+| Signals          | `SessionBinding.eventSource` (G1); Phase-0 for inject details                                                           |
+| listen           | 400ms turn-start blip (G2)                                                                                              |
+| Hold/priority    | Higher breaks; lower swallowed (G3)                                                                                     |
+| sad/shock        | tool fail → sad; turn fail → shock (G4)                                                                                 |
+| Config→client    | settingsScope preferred; cordis.yml+defaults fallback (G5)                                                              |
+| Acceptance       | **Second** `dsh web --port 3090` (G6)                                                                                   |
+| Packaging risk   | #1 = out-of-tree manifest resolve; **mechanism** = host-only patch + `dsh.client` + built client (G7)                   |
+| Own build        | **Required** (`tsdown` → `lib/`); README: install+build before A1                                                       |
+| `three`          | Dep in `dsh-agent-pet` package.json; **inlined** into `lib/client.js` (not harness-provided)                            |
+| `dsh.client`     | `{ platform: 'web', immediately: true, inject: [] }` (inspector verbatim)                                               |
+| Patch YAML       | Host face only; client never listed                                                                                     |
+| Mood store       | Module singleton; RAF reads without React/frame (G-minor)                                                               |
+| Model tool emote | Deferred (hook only)                                                                                                    |
+| Target app       | `dsh web` only                                                                                                          |
+| Blueprints       | `BLUEPRINTS.md` + harness clone                                                                                         |
+| Vault memory     | **Parked**                                                                                                              |
+| Overnight model  | Qwen3.8 ~27B Q8 (cluster-hosted) writes this plugin via harness                                                         |
+| HITL≈0 meaning   | Long-running agentic coding with minimal human babysitting — **not** “pet has no clicks” (that is only a UI constraint) |
 
 ---
 
@@ -634,4 +636,4 @@ Harness root: `/Users/jandahlke/dev/hagbards_stuff/deepseek-harness`
 
 ---
 
-*End of handover. Implement phases 0→6. Ship the smallest adorable thing that passes A1–A7.*
+_End of handover. Implement phases 0→6. Ship the smallest adorable thing that passes A1–A7._

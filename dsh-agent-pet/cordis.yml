@@ -1,0 +1,23 @@
+# Host-only overlay (inspector asymmetry). The Client half is NOT listed here —
+# it arrives from package.json `dsh.client` + the built `lib/client.js`. The
+# relative `name` is anchored to this file's directory, so it loads the built
+# host face (self-contained ESM; config inlined by tsdown).
+#
+# The `config:` block reaches the host `apply(ctx, config)` and is boot-injected
+# into the client as `globalThis.__AGENT_PET_CONFIG__`. All fields are optional;
+# missing ones fall back to defaults in src/config.ts.
+
+- insert:
+    - id: agent-pet
+      # Resolvable package name: the client-module scan resolves the entry name
+      # the way it resolves an in-tree package (via the Node ESM resolver). The
+      # package is linked into node_modules (pnpm workspace / manual symlink), so
+      # `dsh-agent-pet` resolves to this package.json; nearestPackage() then finds
+      # the `dsh.client` declaration and `exports["./client"]`.
+      name: 'dsh-agent-pet'
+      config:
+        enabled: true
+        speciesId: kirby-blob
+        corner: bottom-right
+        sizePx: 160
+        reducedMotion: false
