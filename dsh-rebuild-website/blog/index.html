@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dev blog — Eris</title>
+  <meta name="description" content="Engineering notes on building a local-first AI agent in Rust." />
+  <link rel="canonical" href="https://eris-system.dev/blog/" />
+
+  <meta property="og:title" content="Eris dev blog" />
+  <meta property="og:description" content="Engineering notes on building a local-first AI agent in Rust." />
+  <meta property="og:url" content="https://eris-system.dev/blog/" />
+  <meta property="og:image" content="https://eris-system.dev/assets/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../assets/eris_logo.png" />
+  <link rel="stylesheet" href="../css/theme.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="../index.html">
+        <img class="brand__mark" src="../assets/eris_logo.svg" width="30" height="30" alt="" />
+        <span class="brand__text">
+          <span class="brand__name">ERIS</span>
+          <span class="brand__tag">local-first vault agent</span>
+        </span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-nav" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav" id="primary-nav" aria-label="Primary">
+        <a href="../index.html#pillars">Overview</a>
+        <a href="../index.html#quickstart">Quickstart</a>
+        <a href="../index.html#scope">Features</a>
+        <a href="../index.html#deeper">Deep dive</a>
+        <a href="../blog/" class="nav--active">Blog</a>
+        <a class="nav__cta" href="https://github.com/janpauldahlke/eris">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="section blog-home">
+      <div class="wrap">
+        <span class="section__label">[dev blog]</span>
+        <h1>Dev blog</h1>
+        <p class="section__lede">Engineering notes on building a local-first AI agent in Rust.</p>
+
+        <div class="blog-list">
+          <a href="tool-routing.html" class="blog-card reveal">
+            <span class="blog-card__date">September 2026</span>
+            <h3 class="blog-card__title">How tools get picked in Eris: from grep to embeddings to grammar</h3>
+            <p class="blog-card__excerpt">
+              How a local 14B decides which of ~50 tools to call: keyword lists that grew into embedding seeds, a policy
+              layer that refuses to GBNF-lock a guess, and one offered list feeding both prompt and grammar.
+            </p>
+            <span class="blog-card__read">Read post <span class="arrow">&rarr;</span></span>
+          </a>
+          <a href="forgetting-curve.html" class="blog-card reveal">
+            <span class="blog-card__date">August 2026</span>
+            <h3 class="blog-card__title">I built a forgetting curve for an agent with one user</h3>
+            <p class="blog-card__excerpt">
+              What I learned building a promotion-score ladder and decay daemon for Eris memory: I overbuilt the clever
+              part, and then kept it anyway.
+            </p>
+            <span class="blog-card__read">Read post <span class="arrow">&rarr;</span></span>
+          </a>
+          <a href="gbnf-grammars.html" class="blog-card reveal">
+            <span class="blog-card__date">July 2026</span>
+            <h3 class="blog-card__title">How I use GBNF grammars to make small local models stop hallucinating JSON</h3>
+            <p class="blog-card__excerpt">
+              Why your 8B model keeps breaking your agent's tool protocol, and what you can do about it at the token
+              level. Compiled per-session, narrowed per-turn, zero protocol failures.
+            </p>
+            <span class="blog-card__read">Read post <span class="arrow">&rarr;</span></span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>&copy; 2026 Jan Dahlke &middot; Apache 2.0 &middot; Built with Rust 🦀</p>
+      <p>
+        This site loads no analytics, no cookies, no third-party trackers.
+        That is intentional and on-brand.
+      </p>
+      <p>
+        Built with static HTML. Deploy target: Cloudflare Pages.
+        Source:
+        <a href="https://github.com/janpauldahlke/eris-site">github.com/janpauldahlke/eris-site</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="../js/site.js"></script>
+</body>
+
+</html>
